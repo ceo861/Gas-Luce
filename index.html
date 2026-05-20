@@ -9,412 +9,195 @@
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0D1117; color: #C8D8E8; font-family: 'DM Sans', system-ui, sans-serif; }
-    select option { background: #0D1117; color: #C8D8E8; }
-    @keyframes pulse { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.1)} }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0D1117; }
-    ::-webkit-scrollbar-thumb { background: rgba(0,194,160,0.3); border-radius: 3px; }
-    input::placeholder, textarea::placeholder { color: #333; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0D1117; color: #C8D8E8; font-family: "DM Sans", sans-serif; }
+    input::placeholder, textarea::placeholder { color: #444; }
   </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState } = React;
-
-
-const BLUE = "#0A4F8C";
-const ENERGY = "#00C2A0";
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+const GREEN = "#00C2A0";
 const DARK = "#0D1117";
 const PANEL = "#111820";
-const BORDER = "rgba(0,194,160,0.15)";
 const MUTED = "#5A6A7A";
 const LIGHT = "#C8D8E8";
+const BORDER = "rgba(0,194,160,0.15)";
+const API_KEY = "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";
 
 const situazioni = [
   "Cliente vuole andarsene (switch imminente)",
   "Cliente insoddisfatto del prezzo",
-  "Concorrente ha fatto un'offerta",
+  "Concorrente ha fatto un offerta",
   "Cliente non risponde / freddo",
   "Cliente arrabbiato per una bolletta",
-  "Cliente chiede informazioni senza intenzione chiara",
   "Cliente che minaccia di fare reclamo",
   "Rinnovo contratto in scadenza"
 ];
 
-const concorrenti = [
-  "Enel Energia", "Eni gas e luce", "Edison", "A2A", "Iberdrola",
-  "Illumia", "Sorgenia", "Plenitude", "Altro / Non specificato"
-];
+const concorrenti = ["Enel Energia","Eni gas e luce","Edison","A2A","Iberdrola","Illumia","Sorgenia","Plenitude","Altro"];
 
-const tecniche = [
-  { id: "ricalco", label: "Ricalco e Guida", desc: "Segui il cliente, poi guida" },
-  { id: "reframe", label: "Reframing", desc: "Cambia la cornice mentale" },
-  { id: "rapport", label: "Rapport", desc: "Costruisci fiducia rapida" },
-  { id: "ancoraggio", label: "Ancoraggio", desc: "Associa emozioni positive" }
-];
-
-function GasSalesRetention() {
-  const [step, setStep] = useState("form"); // form | result
+function App() {
+  const [step, setStep] = useState("form");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [copied, setCopied] = useState(false);
-
-  const [form, setForm] = useState({
-    nomeCliente: "",
-    situazione: "",
-    dettaglio: "",
-    concorrente: "",
-    offertaConcorrente: "",
-    anniCliente: "",
-    tipoContratto: "luce e gas",
-    tecniche: ["ricalco", "reframe"]
-  });
-
-  const toggleTecnica = (id) => {
-    setForm(prev => ({
-      ...prev,
-      tecniche: prev.tecniche.includes(id)
-        ? prev.tecniche.filter(t => t !== id)
-        : [...prev.tecniche, id]
-    }));
-  };
+  const [result, setResult] = useState("");
+  const [nome, setNome] = useState("");
+  const [situazione, setSituazione] = useState("");
+  const [dettaglio, setDettaglio] = useState("");
+  const [concorrente, setConcorrente] = useState("");
+  const [anni, setAnni] = useState("");
 
   const generate = async () => {
-    if (!form.situazione) { alert("Seleziona la situazione del cliente."); return; }
+    if (!situazione) { alert("Seleziona la situazione."); return; }
     setLoading(true);
     setStep("result");
-
-    const techLabels = form.tecniche.map(t => tecniche.find(x => x.id === t)?.label).join(", ");
-
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: { "Content-Type": "application/json",
-              "x-api-key": "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",
-              "anthropic-version": "2023-06-01",
-              "anthropic-dangerous-direct-browser-access": "true" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
         body: JSON.stringify({
           model: "claude-3-5-sonnet-20241022",
           max_tokens: 2000,
-          system: `Sei un esperto di comunicazione commerciale e retention clienti per il settore energia (luce e gas). 
-Supporti gli sportellisti di Gas & Luce SRL nel gestire situazioni difficili con i clienti usando tecniche NLP (rapport, ricalco e guida, reframing, ancoraggio).
-Il tuo output è sempre pratico, immediato e pronto all'uso — lo sportellista deve poterlo leggere e usare in 30 secondi. IMPORTANTE: usa sempre il nome reale del cliente nel testo — non usare mai [NOME] come placeholder generico. Il nome del cliente è fornito nel messaggio utente.
-Scrivi sempre in italiano, tono professionale ma caldo e umano. Mai aggressivo o "vendita dura".
-
-Struttura la risposta ESATTAMENTE così:
-
-APERTURA CONSIGLIATA
-[1-2 frasi da dire subito al cliente, che costruiscono rapport e mostrano ascolto]
-
-TECNICA CHIAVE
-[Nome tecnica + spiegazione brevissima di come applicarla in questo caso specifico]
-
-SCRIPT PRINCIPALE
-[3-5 battute concrete, numerate, pronte all'uso. Usa [NOME] come placeholder per il nome del cliente]
-
-DOMANDE DI ANCORAGGIO
-[2-3 domande aperte che fanno riflettere il cliente e lo ancorano al valore del rapporto attuale]
-
-GESTIONE OBIEZIONE PREZZO
-[Se il concorrente ha un'offerta: come rispondere senza abbassare il prezzo, evidenziando valore]
-
-SEGNALE DI CHIUSURA
-[Come capire quando il cliente è pronto a restare, e la frase finale per chiudere positivamente]`,
+          system: "Sei un esperto di retention clienti per il settore energia. Supporti gli sportellisti di Gas & Luce SRL. Output pratico, pronto all uso in 30 secondi. Scrivi in italiano. Struttura con: APERTURA CONSIGLIATA, TECNICA CHIAVE, SCRIPT PRINCIPALE (battute numerate), DOMANDE DI ANCORAGGIO, GESTIONE OBIEZIONE PREZZO, SEGNALE DI CHIUSURA. Usa sempre il nome reale del cliente, mai placeholder.",
           messages: [{
             role: "user",
-            content: `Nome cliente: ${form.nomeCliente || "il cliente"}
-Situazione: ${form.situazione}
-${form.dettaglio ? `Dettagli aggiuntivi: ${form.dettaglio}` : ""}
-${form.concorrente ? `Concorrente: ${form.concorrente}` : ""}
-${form.offertaConcorrente ? `Offerta concorrente: ${form.offertaConcorrente}` : ""}
-${form.anniCliente ? `Anni come cliente: ${form.anniCliente}` : ""}
-Tipo contratto: ${form.tipoContratto}
-Tecniche NLP da usare: ${techLabels || "ricalco e guida, reframing"}
-
-Genera lo script di retention.`
+            content: "Nome cliente: " + (nome || "il cliente") + "\nSituazione: " + situazione + "\nDettagli: " + (dettaglio || "nessuno") + "\nConcorrente: " + (concorrente || "non specificato") + "\nAnni come cliente: " + (anni || "non specificati") + "\n\nGenera script di retention."
           }]
         })
       });
-      const data = await response.json();
-      const text = data.content?.find(b => b.type === "text")?.text || "Errore nella generazione.";
-      setResult(text);
-    } catch (e) {
-      setResult("Errore di connessione. Riprova.");
+      const data = await res.json();
+      if (data.error) setResult("Errore API: " + data.error.type + " — " + data.error.message);
+      else if (data.content && data.content[0]) setResult(data.content[0].text);
+      else setResult("Risposta vuota: " + JSON.stringify(data));
+    } catch(e) {
+      setResult("Errore connessione: " + e.message);
     }
     setLoading(false);
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(result || "");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const s = {
+    app: { minHeight: "100vh", background: DARK },
+    header: { background: PANEL, borderBottom: "1px solid " + BORDER, padding: "16px 28px", display: "flex", alignItems: "center", gap: 12 },
+    dot: { width: 8, height: 8, borderRadius: "50%", background: GREEN },
+    title: { fontSize: 13, fontWeight: 700, color: LIGHT },
+    sub: { fontSize: 10, color: MUTED },
+    container: { maxWidth: 680, margin: "0 auto", padding: "32px 20px" },
+    card: { background: PANEL, border: "1px solid " + BORDER, padding: "20px", marginBottom: 14, borderRadius: 8 },
+    label: { fontSize: 10, letterSpacing: "0.2em", color: GREEN, textTransform: "uppercase", fontWeight: 700, marginBottom: 6, display: "block" },
+    input: { width: "100%", background: DARK, border: "1px solid rgba(0,194,160,0.2)", color: LIGHT, padding: "10px 12px", fontSize: 14, borderRadius: 5, outline: "none", fontFamily: "inherit", boxSizing: "border-box" },
+    select: { width: "100%", background: DARK, border: "1px solid rgba(0,194,160,0.2)", color: LIGHT, padding: "10px 12px", fontSize: 14, borderRadius: 5, outline: "none", cursor: "pointer", boxSizing: "border-box" },
+    textarea: { width: "100%", background: DARK, border: "1px solid rgba(0,194,160,0.2)", color: LIGHT, padding: "10px 12px", fontSize: 14, borderRadius: 5, outline: "none", fontFamily: "inherit", resize: "vertical", minHeight: 80, boxSizing: "border-box" },
+    row: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+    cta: { width: "100%", padding: "14px", background: GREEN, color: DARK, fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", border: "none", cursor: "pointer", fontFamily: "inherit", fontWeight: 700, borderRadius: 5 },
+    back: { background: "none", border: "1px solid " + BORDER, color: MUTED, padding: "8px 16px", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit", borderRadius: 5, marginBottom: 20 },
+    resultBox: { background: PANEL, border: "1px solid " + BORDER, padding: "24px", borderRadius: 8 }
   };
 
   const formatResult = (text) => {
-    const sections = text.split("\n\n");
-    return sections.map((section, i) => {
-      const lines = section.split("\n");
-      const firstLine = lines[0];
-      const isHeader = firstLine === firstLine.toUpperCase() && firstLine.length > 3 && !firstLine.startsWith("[");
-      if (isHeader) {
-        return (
-          <div key={i} style={{ marginBottom: 24 }}>
-            <p style={{ color: ENERGY, fontSize: 10, letterSpacing: "0.25em", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>
-              {firstLine}
-            </p>
-            {lines.slice(1).map((line, j) => (
-              <p key={j} style={{ color: LIGHT, fontSize: 14.5, lineHeight: 1.7, marginBottom: 4 }}>{line}</p>
-            ))}
-          </div>
+    return text.split("\n").map((line, i) => {
+      if (!line.trim()) return React.createElement("div", {key:i, style:{height:8}});
+      const headers = ["APERTURA CONSIGLIATA","TECNICA CHIAVE","SCRIPT PRINCIPALE","DOMANDE DI ANCORAGGIO","GESTIONE OBIEZIONE PREZZO","SEGNALE DI CHIUSURA"];
+      const clean = line.replace(/\*\*(.*?)\*\*/g,"$1").replace(/\*(.*?)\*/g,"$1");
+      if (headers.some(h => clean.toUpperCase().includes(h))) {
+        return React.createElement("p", {key:i, style:{color:GREEN, fontSize:10, letterSpacing:"0.2em", textTransform:"uppercase", fontWeight:700, marginTop:18, marginBottom:6}}, clean);
+      }
+      if (line.startsWith("AGENTE:")) {
+        return React.createElement("div", {key:i, style:{background:"rgba(0,194,160,0.06)", border:"1px solid rgba(0,194,160,0.2)", borderRadius:5, padding:"8px 12px", marginBottom:6}},
+          React.createElement("span", {style:{color:GREEN, fontSize:10, fontWeight:700, display:"block", marginBottom:3}}, "AGENTE"),
+          React.createElement("p", {style:{color:LIGHT, fontSize:14, lineHeight:1.6}}, line.replace("AGENTE:","").trim())
         );
       }
-      return (
-        <div key={i} style={{ marginBottom: 16 }}>
-          {lines.map((line, j) => (
-            <p key={j} style={{ color: LIGHT, fontSize: 14.5, lineHeight: 1.7, marginBottom: 2 }}>{line}</p>
-          ))}
-        </div>
-      );
+      if (line.startsWith("CLIENTE")) {
+        return React.createElement("div", {key:i, style:{background:"rgba(61,158,255,0.06)", border:"1px solid rgba(61,158,255,0.2)", borderRadius:5, padding:"8px 12px", marginBottom:6, marginLeft:16}},
+          React.createElement("span", {style:{color:"#3D9EFF", fontSize:10, fontWeight:700, display:"block", marginBottom:3}}, "CLIENTE"),
+          React.createElement("p", {style:{color:"#B0C4DC", fontSize:14, lineHeight:1.6}}, line.replace(/CLIENTE.*?:/,"").trim())
+        );
+      }
+      return React.createElement("p", {key:i, style:{color:"#A8BCCC", fontSize:14, lineHeight:1.7, marginBottom:3}}, clean);
     });
   };
 
-  const s = {
-    app: { minHeight: "100vh", background: DARK, fontFamily: "'DM Sans', system-ui, sans-serif", color: LIGHT },
-    header: {
-      background: PANEL, borderBottom: `1px solid ${BORDER}`,
-      padding: "16px 32px", display: "flex", alignItems: "center", gap: 16
-    },
-    dot: { width: 8, height: 8, borderRadius: "50%", background: ENERGY },
-    logoText: { fontSize: 13, fontWeight: 600, color: LIGHT, letterSpacing: "0.05em" },
-    logoSub: { fontSize: 10, color: MUTED, letterSpacing: "0.1em", textTransform: "uppercase", marginLeft: 2 },
-    badge: {
-      marginLeft: "auto", background: "rgba(0,194,160,0.1)", border: `1px solid rgba(0,194,160,0.3)`,
-      color: ENERGY, fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase",
-      padding: "4px 10px", borderRadius: 2
-    },
-    container: { maxWidth: 680, margin: "0 auto", padding: "40px 24px" },
-    sectionTitle: { fontSize: 10, letterSpacing: "0.25em", color: ENERGY, textTransform: "uppercase", marginBottom: 12, fontWeight: 600 },
-    card: { background: PANEL, border: `1px solid ${BORDER}`, padding: "24px 28px", marginBottom: 20, borderRadius: 4 },
-    label: { fontSize: 11, letterSpacing: "0.15em", color: MUTED, textTransform: "uppercase", marginBottom: 6, display: "block" },
-    select: {
-      width: "100%", background: "#0D1117", border: `1px solid rgba(0,194,160,0.2)`,
-      color: LIGHT, padding: "11px 14px", fontSize: 14, borderRadius: 3,
-      outline: "none", cursor: "pointer", boxSizing: "border-box"
-    },
-    input: {
-      width: "100%", background: "#0D1117", border: `1px solid rgba(0,194,160,0.2)`,
-      color: LIGHT, padding: "11px 14px", fontSize: 14, borderRadius: 3,
-      outline: "none", boxSizing: "border-box", fontFamily: "inherit"
-    },
-    textarea: {
-      width: "100%", background: "#0D1117", border: `1px solid rgba(0,194,160,0.2)`,
-      color: LIGHT, padding: "11px 14px", fontSize: 14, borderRadius: 3,
-      outline: "none", boxSizing: "border-box", fontFamily: "inherit",
-      resize: "vertical", minHeight: 72
-    },
-    row: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 },
-    field: { marginBottom: 16 },
-    techChip: (active) => ({
-      padding: "8px 14px", fontSize: 11, letterSpacing: "0.08em",
-      cursor: "pointer", border: `1px solid`,
-      borderColor: active ? ENERGY : "rgba(0,194,160,0.2)",
-      color: active ? ENERGY : MUTED,
-      background: active ? "rgba(0,194,160,0.08)" : "transparent",
-      borderRadius: 3, fontFamily: "inherit", transition: "all 0.15s"
-    }),
-    cta: {
-      width: "100%", padding: "16px", background: ENERGY, color: DARK,
-      fontSize: 12, letterSpacing: "0.2em", textTransform: "uppercase",
-      border: "none", cursor: "pointer", fontFamily: "inherit",
-      fontWeight: 700, borderRadius: 3, transition: "opacity 0.2s"
-    },
-    backBtn: {
-      background: "none", border: `1px solid ${BORDER}`, color: MUTED,
-      padding: "9px 20px", fontSize: 10, letterSpacing: "0.15em",
-      textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit",
-      borderRadius: 3, marginBottom: 24, transition: "color 0.15s"
-    },
-    resultBox: {
-      background: PANEL, border: `1px solid ${BORDER}`,
-      padding: "28px 32px", borderRadius: 4, marginTop: 24
-    },
-    copyBtn: {
-      background: "rgba(0,194,160,0.1)", border: `1px solid rgba(0,194,160,0.3)`,
-      color: ENERGY, padding: "9px 20px", fontSize: 10, letterSpacing: "0.15em",
-      textTransform: "uppercase", cursor: "pointer", fontFamily: "inherit",
-      borderRadius: 3, marginTop: 24, transition: "all 0.15s"
-    }
-  };
-
-  // RESULT VIEW
-  if (step === "result") {
-    return (
-      <div style={s.app}>
-        <div style={s.header}>
-          <div style={s.dot} />
-          <div>
-            <span style={s.logoText}>Gas & Luce SRL</span>
-            <span style={s.logoSub}> · Retention Assistant</span>
-          </div>
-          <div style={s.badge}>AI attivo</div>
-        </div>
-        <div style={s.container}>
-          <button style={s.backBtn} onClick={() => { setStep("form"); setResult(null); }}>
-            ← Nuova situazione
-          </button>
-          <p style={s.sectionTitle}>Script generato per: {form.situazione}</p>
-
-          {loading ? (
-            <div style={{ textAlign: "center", padding: "60px 0" }}>
-              <div style={{ display: "flex", justifyContent: "center", gap: 6, marginBottom: 20 }}>
-                {[0,1,2].map(i => (
-                  <div key={i} style={{
-                    width: 8, height: 8, background: ENERGY, borderRadius: "50%",
-                    animation: `pulse 1s ease-in-out ${i*0.2}s infinite`
-                  }} />
-                ))}
-              </div>
-              <style>{`@keyframes pulse{0%,100%{opacity:0.2;transform:scale(0.8)}50%{opacity:1;transform:scale(1.1)}}`}</style>
-              <p style={{ color: MUTED, fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase" }}>
-                Elaborazione script in corso...
-              </p>
-            </div>
-          ) : (
-            <div style={s.resultBox}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${BORDER}` }}>
-                <div style={s.dot} />
-                <span style={{ fontSize: 11, color: MUTED, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                  Script pronto all'uso
-                </span>
-              </div>
-              {result && formatResult(result)}
-              <button style={s.copyBtn} onClick={copyToClipboard}>
-                {copied ? "✓ Copiato!" : "Copia script"}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // FORM VIEW
-  return (
+  if (step === "result") return (
     <div style={s.app}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <div style={s.header}>
         <div style={s.dot} />
-        <div>
-          <span style={s.logoText}>Gas & Luce SRL</span>
-          <span style={s.logoSub}> · Retention Assistant</span>
-        </div>
-        <div style={s.badge}>AI attivo</div>
+        <div><div style={s.title}>Gas & Luce SRL</div><div style={s.sub}>Retention Assistant</div></div>
       </div>
-
       <div style={s.container}>
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 600, color: "#FFFFFF", marginBottom: 6 }}>
-            Gestisci il cliente
-          </h1>
-          <p style={{ fontSize: 13, color: MUTED }}>
-            Descrivi la situazione — ti genero uno script NLP pronto all'uso.
-          </p>
-        </div>
-
-        {/* Situazione */}
-        <div style={s.card}>
-          <p style={s.sectionTitle}>Cliente</p>
-          <div style={s.field}>
-            <label style={s.label}>Nome cliente</label>
-            <input style={s.input} value={form.nomeCliente}
-              onChange={e => setForm({...form, nomeCliente: e.target.value})}
-              placeholder="Es. Giorgio Rovella" />
+        <button style={s.back} onClick={()=>{setStep("form");setResult("");}}>← Nuova situazione</button>
+        {loading ? (
+          <div style={{textAlign:"center", padding:"60px 0"}}>
+            <p style={{color:GREEN, fontSize:11, letterSpacing:"0.2em", textTransform:"uppercase"}}>Elaborazione script...</p>
           </div>
-        </div>
+        ) : (
+          <div style={s.resultBox}>
+            <p style={{color:GREEN, fontSize:10, letterSpacing:"0.2em", textTransform:"uppercase", marginBottom:16, paddingBottom:12, borderBottom:"1px solid "+BORDER}}>Script pronto — {situazione}</p>
+            {formatResult(result)}
+            <button style={{...s.back, marginBottom:0, marginTop:20}} onClick={()=>navigator.clipboard.writeText(result)}>Copia script</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={s.app}>
+      <div style={s.header}>
+        <div style={s.dot} />
+        <div><div style={s.title}>Gas & Luce SRL</div><div style={s.sub}>Retention Assistant — AI</div></div>
+      </div>
+      <div style={s.container}>
+        <h1 style={{fontSize:22, fontWeight:700, color:"#fff", marginBottom:6}}>Gestisci il cliente</h1>
+        <p style={{fontSize:13, color:MUTED, marginBottom:24}}>Descrivi la situazione — ti genero uno script NLP pronto all uso.</p>
 
         <div style={s.card}>
-          <p style={s.sectionTitle}>1 — Situazione cliente</p>
-          <div style={s.field}>
-            <label style={s.label}>Cosa sta succedendo?</label>
-            <select style={s.select} value={form.situazione} onChange={e => setForm({...form, situazione: e.target.value})}>
-              <option value="">Seleziona situazione...</option>
-              {situazioni.map(s => <option key={s} value={s}>{s}</option>)}
+          <div style={{marginBottom:14}}>
+            <label style={s.label}>Nome cliente</label>
+            <input style={s.input} value={nome} onChange={e=>setNome(e.target.value)} placeholder="Es. Mario Rossi" />
+          </div>
+          <div>
+            <label style={s.label}>Situazione *</label>
+            <select style={s.select} value={situazione} onChange={e=>setSituazione(e.target.value)}>
+              <option value="">Seleziona...</option>
+              {situazioni.map(s=><option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div style={s.field}>
-            <label style={s.label}>Dettagli aggiuntivi (facoltativo)</label>
-            <textarea style={s.textarea} value={form.dettaglio}
-              onChange={e => setForm({...form, dettaglio: e.target.value})}
-              placeholder="Es. il cliente ha ricevuto una bolletta più alta del solito, è un cliente storico da 4 anni..." />
-          </div>
         </div>
 
-        {/* Contesto */}
         <div style={s.card}>
-          <p style={s.sectionTitle}>2 — Contesto contratto</p>
           <div style={s.row}>
-            <div style={s.field}>
+            <div>
               <label style={s.label}>Anni come cliente</label>
-              <input style={s.input} type="number" value={form.anniCliente}
-                onChange={e => setForm({...form, anniCliente: e.target.value})}
-                placeholder="Es. 3" />
+              <input style={s.input} type="number" value={anni} onChange={e=>setAnni(e.target.value)} placeholder="Es. 3" />
             </div>
-            <div style={s.field}>
-              <label style={s.label}>Tipo contratto</label>
-              <select style={s.select} value={form.tipoContratto} onChange={e => setForm({...form, tipoContratto: e.target.value})}>
-                <option value="luce e gas">Luce e Gas</option>
-                <option value="solo luce">Solo Luce</option>
-                <option value="solo gas">Solo Gas</option>
-              </select>
-            </div>
-          </div>
-          <div style={s.row}>
-            <div style={s.field}>
+            <div>
               <label style={s.label}>Concorrente citato</label>
-              <select style={s.select} value={form.concorrente} onChange={e => setForm({...form, concorrente: e.target.value})}>
-                <option value="">Nessuno / Non specificato</option>
-                {concorrenti.map(c => <option key={c} value={c}>{c}</option>)}
+              <select style={s.select} value={concorrente} onChange={e=>setConcorrente(e.target.value)}>
+                <option value="">Nessuno</option>
+                {concorrenti.map(c=><option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div style={s.field}>
-              <label style={s.label}>Offerta concorrente</label>
-              <input style={s.input} value={form.offertaConcorrente}
-                onChange={e => setForm({...form, offertaConcorrente: e.target.value})}
-                placeholder="Es. -20% sulla bolletta" />
-            </div>
           </div>
         </div>
 
-        {/* Tecniche NLP */}
         <div style={s.card}>
-          <p style={s.sectionTitle}>3 — Tecniche NLP da applicare</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {tecniche.map(t => (
-              <button key={t.id} style={s.techChip(form.tecniche.includes(t.id))}
-                onClick={() => toggleTecnica(t.id)}>
-                {t.label}
-                <span style={{ color: MUTED, marginLeft: 6, fontSize: 10 }}>— {t.desc}</span>
-              </button>
-            ))}
-          </div>
+          <label style={s.label}>Dettagli aggiuntivi</label>
+          <textarea style={s.textarea} value={dettaglio} onChange={e=>setDettaglio(e.target.value)} placeholder="Es. offerta concorrente a 0,30 euro/kwh, cliente da 4 anni, bolletta più alta del solito..." />
         </div>
 
-        <button style={s.cta} onClick={generate}>
-          Genera script di retention →
-        </button>
-
-        <p style={{ fontSize: 11, color: MUTED, textAlign: "center", marginTop: 14, letterSpacing: "0.05em" }}>
-          Lo script viene generato in base alle tecniche NLP selezionate e al contesto del cliente.
-        </p>
+        <button style={s.cta} onClick={generate}>Genera script di retention →</button>
       </div>
     </div>
   );
 }
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(React.createElement(GasSalesRetention));
-  </script>
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
 </body>
 </html>
